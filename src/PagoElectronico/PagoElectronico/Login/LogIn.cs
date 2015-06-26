@@ -123,6 +123,7 @@ namespace PagoElectronico.Login
                 btnIngresar.Enabled = false;
                 this.Hide();
             } else {
+               
                 if (verificoSiDebe())
                 {
                     DialogResult dialogResult = MessageBox.Show("¿Desea renovar su suscripcion? ", "Cuentas", MessageBoxButtons.YesNo);
@@ -321,16 +322,16 @@ namespace PagoElectronico.Login
             bool debe = false;
             SqlCommand command = new SqlCommand(query, con.cnn);
             SqlDataReader lector = command.ExecuteReader();
-            
+
             if (lector.Read())
             {
                 MessageBox.Show("Alguna de sus cuentas se encuentra deshabilitada");
-                
+
                 debe = true;
                 con.cnn.Close();
-                
+
             }
-            con.cnn.Close();
+         con.cnn.Close();
             return debe;
         }
         private int getIdCliente()
@@ -341,11 +342,15 @@ namespace PagoElectronico.Login
             string query = "SELECT id_cliente FROM LPP.CLIENTES WHERE username = '" + txtUsuario.Text + "'";
             SqlCommand command = new SqlCommand(query, con.cnn);
             SqlDataReader lector = command.ExecuteReader();
-            lector.Read();
-            int id_cliente = lector.GetInt32(0);
-            con.cnn.Close();
-            return id_cliente;
-
+            if (lector.HasRows)
+            {
+                lector.Read();
+                int id_cliente = lector.GetInt32(0);
+                con.cnn.Close();
+                return id_cliente;
+            }
+            else
+                return 0;
         }
 
        

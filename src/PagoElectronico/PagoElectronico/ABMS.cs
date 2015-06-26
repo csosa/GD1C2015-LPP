@@ -49,35 +49,7 @@ namespace PagoElectronico
             return salida;
              
         }
-        public int clienteRegistrado( string Tipo_ID, int Numero_ID)
-        {
-            con1.cnn.Open();
-            int contador = 0;
-            try
-            {   
-
-                string query = "SELECT id_tipo_doc, num_doc FROM LPP.CLIENTES WHERE id_tipo_doc = (SELECT tipo_cod FROM LPP.TIPO_DOCS WHERE tipo_descr = '" + Tipo_ID + "') AND num_doc = " + Numero_ID + "";
-                SqlCommand command = new SqlCommand(query, con1.cnn);
-                dr = command.ExecuteReader();
-                while (dr.Read())
-                {
-
-                    contador++;
-                }
-                dr.Close();
-
-            }
-            catch (Exception )
-            {
-                con1.cnn.Close();
-                return contador;
-                
-            }
-            con1.cnn.Close();
-            //MessageBox.Show("El Cliente ya existe");
-            return 0;
-        }
-
+    
         public string modificarCliente(string Nombre, string Apellido, string Tipo_ID, int Numero_ID, string Mail, DateTime Nacimiento,string Nacionalidad,string Username)
         {
             con1.cnn.Open();
@@ -85,7 +57,7 @@ namespace PagoElectronico
 
             try
             {
-                string query = "UPDATE LPP.CLIENTES SET fecha_nac = CONVERT(DATETIME, '" + Nacimiento.ToString("yyyy-MM-dd HH:MM:ss")+ "', 103)"
+                string query = "UPDATE LPP.CLIENTES SET fecha_nac = CONVERT(DATETIME, '" + Nacimiento+ "', 103)"
                     +", mail = '" + Mail 
                     + "', apellido = '" + Apellido 
                     + "', nombre = '" + Nombre 

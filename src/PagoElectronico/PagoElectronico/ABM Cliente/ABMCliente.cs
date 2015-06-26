@@ -23,7 +23,7 @@ namespace PagoElectronico
         public ABM_Cliente.BuscarCliente padre_buscar;
         public string evento;
         public string tipoDoc = "";
-        public int nroDoc = 0;
+        public decimal nroDoc = 0;
         public int id = 0;
         private DateTime fechaNac;
         int ban;
@@ -61,7 +61,6 @@ namespace PagoElectronico
             // Pregunto todos los TipoDoc de la DB
             
             string query = "SELECT tipo_descr FROM LPP.TIPO_DOCS";
-
             SqlCommand command = new SqlCommand(query, con1.cnn);
             SqlDataReader lector1 = command.ExecuteReader();
             while (lector1.Read())
@@ -71,13 +70,9 @@ namespace PagoElectronico
             }
 
             con1.cnn.Close();
-
-            con1.cnn.Open();
-
             // Pregunto todos los TipoDoc de la DB
-            cb2.Items.Add("");
+            con1.cnn.Open();
             string query2 = "SELECT pais FROM LPP.PAISES ORDER BY pais";
-
             SqlCommand command2 = new SqlCommand(query2, con1.cnn);
             SqlDataReader lector2 = command2.ExecuteReader();
             while (lector2.Read())
@@ -99,8 +94,10 @@ namespace PagoElectronico
                 SqlDataReader lector = command1.ExecuteReader();
                 
                 lector.Read();
-                cbID.Text = lector.GetString(0); 
+                cbID.Text = lector.GetString(0);
+                tipoDoc = lector.GetString(0);
                 txtNumeroID.Text = lector.GetDecimal(1).ToString();
+                nroDoc = lector.GetDecimal(1);
                 txtNombre.Text = lector.GetString(2);
                 txtApellido.Text = lector.GetString(3);
                 cb2.Text = lector.GetString(4); 
@@ -168,9 +165,6 @@ namespace PagoElectronico
             }
         
         }
-
-       
-
         private void btnNuevo_Click(object sender, EventArgs e)
         {
             
@@ -185,11 +179,7 @@ namespace PagoElectronico
             btnModificar.Enabled = false;
             btnEliminar.Enabled = false;
             btnBuscar.Enabled = false;
-            
-           
         }
-
-
         private void btnSalir_Click(object sender, EventArgs e)
         {
             this.Close();
@@ -200,12 +190,9 @@ namespace PagoElectronico
             
             if (txtNombre.Text == "")
             {
-
                 errorProvider1.SetError(txtNombre,"No ingreso nombre");
                 e.Cancel = true;
                 return;
-                
-              
             }
             else
             {
@@ -226,7 +213,6 @@ namespace PagoElectronico
                errorProvider1.Clear();
             }
         }
-
 
         private void txtMail_Validating(object sender, CancelEventArgs e)
         {
@@ -266,9 +252,6 @@ namespace PagoElectronico
                 errorProvider1.Clear();
             }
         }
-
-       
-      
         private bool fechaMayorAHoy(int fecha)
         {
             bool ret;
@@ -334,8 +317,10 @@ namespace PagoElectronico
                         return;
                     }
 
+                   this.grabarEnTabla();
+                        
+                        
                     
-                    this.grabarEnTabla();
 
             }
         }
@@ -344,17 +329,16 @@ namespace PagoElectronico
         {
             // Conectar a DB
             Conexion con1 = new Conexion();
-
-
+            fechaNac = DateTime.Parse(fechaNacimiento.Value.ToString("yyyy-MM-dd"));
+            MessageBox.Show(""+fechaNac);
             // Inserto Cliente
             if (txtNombre.Text != "" && txtApellido.Text != "" && cbID.Text != "" && txtNumeroID.Text != "" && txtMail.Text != "" && cb2.Text != "" && fechaNacimiento.Value != null && txtDomicilio.Text != "" && txtNumeroCalle.Text !="")
             {
-                fechaNac = DateTime.Parse(fechaNacimiento.Value.ToString("yyyy-MM-dd"));
+                
                 if (ban == 1)
-                {
-                    if (abm.clienteRegistrado(cbID.Text, Convert.ToInt32(txtNumeroID.Text)) == 0)
+                {      
+                    if(mismoID()==false)
                     {
-
                         //Compruebo que no se repitan los mails
                         string query2 = "SELECT 1 FROM LPP.CLIENTES WHERE mail = '" + txtMail.Text + "' ";
                         con1.cnn.Open();
@@ -371,7 +355,6 @@ namespace PagoElectronico
                         }
 
                         con1.cnn.Close();
-                        //int piso = 0;
 
                         if (txtPiso.Text == "")
                         {
@@ -386,37 +369,22 @@ namespace PagoElectronico
                         int id_domicilio = abm.insertarDomicilio(txtDomicilio.Text, Convert.ToInt32(txtNumeroCalle.Text), Convert.ToInt32(txtPiso.Text), txtDepto.Text, txtLocalidad.Text);
                         string salida = abm.insertarCliente(txtNombre.Text, txtApellido.Text, cbID.Text, Convert.ToInt32(txtNumeroID.Text), txtMail.Text,fechaNac, cb2.Text, id_domicilio,txtUsuario.Text);
                         MessageBox.Show("" + salida);
-                        tipoDoc = cbID.Text;
-                        nroDoc = Convert.ToInt32(txtNumeroID.Text);
-                        boxDatosCliente.Enabled = false;
-                        cbID.Text = "Elija una opcion";
-                        fechaNacimiento.Value = fecha;
-                        lblNombre.Enabled = false;
-                        txtNombre.Enabled = false;
-                        btnLimpiar.Enabled = true;
-                        btnGrabar.Enabled = false;
-                        btnBuscar.Enabled = true;
-                        btnNuevo.Enabled = true;
-                        txtUsuario.Text = "";
-                        btnSalir.Enabled = true;
-                        txtNombre.Text = "";
-                        txtApellido.Text = "";
-                        txtLocalidad.Text = "";
-                        cb2.Text = "";
-                        txtNumeroID.Text = "";
-                        txtMail.Text = "";
-                        txtDomicilio.Text = "";
-                        txtNumeroCalle.Text = "";
-                        txtPiso.Text = "";
-                        
+                    
                     }
+                else
+                {
+                    MessageBox.Show("Ya existe ese Número y Tipo de Identificacion");
+                    return;
                 }
+
+                    
+             }
                     //Modifico al Cliente
-                    if (ban == 2)
+                 if (ban == 2)
                     {
                         //Saco id_domicilio para modificar
                         Conexion con3 = new Conexion();
-                        string query3 = "SELECT id_domicilio FROM LPP.CLIENTES WHERE id_tipo_doc = (select tipo_cod from LPP.TIPO_DOCS WHERE tipo_descr = '" + cbID.Text + "') AND num_doc= " + Convert.ToInt32(txtNumeroID.Text) + " ";
+                        string query3 = "SELECT id_domicilio FROM LPP.CLIENTES WHERE id_tipo_doc = (select tipo_cod from LPP.TIPO_DOCS WHERE tipo_descr = '" + tipoDoc + "') AND num_doc= " + nroDoc + " ";
                         con3.cnn.Open();
                         SqlCommand command3 = new SqlCommand(query3, con3.cnn);
                         Int32 id_domicilio = Convert.ToInt32(command3.ExecuteScalar());
@@ -442,27 +410,60 @@ namespace PagoElectronico
 
                             con2.cnn.Close();
 
-                            //Modifico en la Tabla Domicilio y CLiente
-                            abm.modificarDomicilio(txtDomicilio.Text,Convert.ToInt32(txtNumeroCalle.Text),Convert.ToInt32(txtPiso.Text), txtDepto.Text, txtLocalidad.Text,id_domicilio);
-                            string salida = abm.modificarCliente(txtNombre.Text, txtApellido.Text, cbID.Text, Convert.ToInt32(txtNumeroID.Text), txtMail.Text, fechaNac , cb2.Text, txtUsuario.Text);
-                            MessageBox.Show("" + salida);
+                            if (tipoDoc == cbID.Text && nroDoc == Convert.ToDecimal(txtNumeroID.Text))
+                            { //Modifico en la Tabla Domicilio y CLiente
+                                abm.modificarDomicilio(txtDomicilio.Text, Convert.ToInt32(txtNumeroCalle.Text), Convert.ToInt32(txtPiso.Text), txtDepto.Text, txtLocalidad.Text, id_domicilio);
+                                string salida = abm.modificarCliente(txtNombre.Text, txtApellido.Text, cbID.Text, Convert.ToInt32(txtNumeroID.Text), txtMail.Text, fechaNac, cb2.Text, txtUsuario.Text);
+                                MessageBox.Show("" + salida);
+                            }
+                            else
+                            {
+                                if (mismoID())
+                                {
+                                    MessageBox.Show("Ese Numero y Tipo de Identificacion ya existe");
+                                    return;
+                                }
+                                else
+                                {
+                                    //Modifico en la Tabla Domicilio y CLiente
+                                    abm.modificarDomicilio(txtDomicilio.Text, Convert.ToInt32(txtNumeroCalle.Text), Convert.ToInt32(txtPiso.Text), txtDepto.Text, txtLocalidad.Text, id_domicilio);
+                                    string salida = abm.modificarCliente(txtNombre.Text, txtApellido.Text, cbID.Text, Convert.ToInt32(txtNumeroID.Text), txtMail.Text, fechaNac, cb2.Text, txtUsuario.Text);
+                                    MessageBox.Show("" + salida);
+                                }
+                            }
+
                         }
 
                         else
                         {
-                            //Modifico en la Tabla Domicilio y Cliente
-                            abm.modificarDomicilio(txtDomicilio.Text, Convert.ToInt32(txtNumeroCalle.Text), Convert.ToInt32(txtPiso.Text), txtDepto.Text, txtLocalidad.Text, id_domicilio);
-                            string salida = abm.modificarCliente(txtNombre.Text, txtApellido.Text, cbID.Text, Convert.ToInt32(txtNumeroID.Text), txtMail.Text, fechaNac, cb2.Text, txtUsuario.Text);
-                            MessageBox.Show("" + salida);
+                            if (tipoDoc == cbID.Text && nroDoc == Convert.ToDecimal(txtNumeroID.Text))
+                            {   //Modifico en la Tabla Domicilio y Cliente
+                                abm.modificarDomicilio(txtDomicilio.Text, Convert.ToInt32(txtNumeroCalle.Text), Convert.ToInt32(txtPiso.Text), txtDepto.Text, txtLocalidad.Text, id_domicilio);
+                                string salida = abm.modificarCliente(txtNombre.Text, txtApellido.Text, cbID.Text, Convert.ToInt32(txtNumeroID.Text), txtMail.Text, fechaNac, cb2.Text, txtUsuario.Text);
+                                MessageBox.Show("" + salida);
+                            }
+                            else
+                            {
+                                if (mismoID())
+                                {
+                                    MessageBox.Show("Ese Numero y Tipo de Identificacion ya existe");
+                                    return;
+                                }
+                                else
+                                {
+                                    //Modifico en la Tabla Domicilio y CLiente
+                                    abm.modificarDomicilio(txtDomicilio.Text, Convert.ToInt32(txtNumeroCalle.Text), Convert.ToInt32(txtPiso.Text), txtDepto.Text, txtLocalidad.Text, id_domicilio);
+                                    string salida = abm.modificarCliente(txtNombre.Text, txtApellido.Text, cbID.Text, Convert.ToInt32(txtNumeroID.Text), txtMail.Text, fechaNac, cb2.Text, txtUsuario.Text);
+                                    MessageBox.Show("" + salida);
+                                }
+
+                            }
 
                         }
 
                       
                     }
-
-                    boxDatosCliente.Enabled = false;
-                    cbID.Text = "";
-                    fechaNacimiento.Value = fecha;
+                    limpiarDatos();
                     lblNombre.Enabled = false;
                     txtNombre.Enabled = false;
                     btnLimpiar.Enabled = true;
@@ -470,16 +471,7 @@ namespace PagoElectronico
                     btnBuscar.Enabled = true;
                     btnNuevo.Enabled = true;
                     btnSalir.Enabled = true;
-                    txtNombre.Text = "";
-                    txtApellido.Text = "";
-                    txtDomicilio.Text = "";
-                    txtNumeroCalle.Text = "";
-                    txtLocalidad.Text = "";
-                    txtPiso.Text = "";
-                    txtDepto.Text = "";
-                    cb2.Text = "";
-                    txtNumeroID.Text = "";
-                    txtMail.Text = "";
+                  
                 }
                 else
                 {
@@ -511,6 +503,7 @@ namespace PagoElectronico
             boxDatosCliente.Enabled = true;
             btnModificar.Enabled = false;
             btnNuevo.Enabled = false;
+            btnLimpiar.Enabled = true;
             btnBuscar.Enabled = false;
             btnEliminar.Enabled = false;
             
@@ -518,18 +511,7 @@ namespace PagoElectronico
 
         private void btnLimpiar_Click(object sender, EventArgs e)
         {
-            txtNombre.Text = "";
-            txtApellido.Text = "";
-            txtLocalidad.Text = "";
-            cb2.Text = "";
-            txtNumeroID.Text = "";
-            txtMail.Text = "";
-            txtDomicilio.Text = "";
-            txtNumeroCalle.Text = "";
-            fechaNacimiento.Value = fecha;
-            txtPiso.Text = "";
-            txtDepto.Text = "";
-            txtNombre.Focus();
+            limpiarDatos();
         }
 
         private void btnEliminar_Click(object sender, EventArgs e)
@@ -542,18 +524,7 @@ namespace PagoElectronico
             string salida = abm.eliminarCliente(cbID.Text, Convert.ToInt32(txtNumeroID.Text));
             MessageBox.Show(""+salida);
             con1.cnn.Close();
-           
-           txtNombre.Text = "";
-           txtApellido.Text = "";
-           txtLocalidad.Text = "";
-           cb2.Text = "";
-           txtNumeroID.Text = "";
-           txtMail.Text = "";
-           txtDomicilio.Text = "";
-           txtPiso.Text = "";
-           txtNumeroCalle.Text = "";
-           fechaNacimiento.Value = fecha;
-           cbID.Text = "Elija una opción";
+            limpiarDatos();
            txtNombre.Focus();
            boxDatosCliente.Enabled = false;
            btnEliminar.Enabled = false;
@@ -599,6 +570,44 @@ namespace PagoElectronico
                 txtMail.Enabled = false;
             }
         }
+      private bool mismoID()
+      {
+          Conexion con = new Conexion();
+          //VERIFICO SI SE REPITEN LOS IDS
+          con.cnn.Open();
+          string query = "SELECT 1 "+
+                         "FROM LPP.CLIENTES C JOIN LPP.TIPO_DOCS T ON c.id_tipo_doc=t.tipo_cod "+
+                         "WHERE C.num_doc = "+Convert.ToDecimal(txtNumeroID.Text)+" AND T.tipo_descr='"+cbID.Text+"'";
+          SqlCommand command = new SqlCommand(query, con.cnn);
+          SqlDataReader lector = command.ExecuteReader();
+          if (lector.HasRows)
+              return true;
+          else
+              return false;
+      }
+      private void limpiarDatos()
+      {
+          boxDatosCliente.Enabled = false;
+          cbID.Text = "";
+          fechaNacimiento.Value = fecha;
+          lblNombre.Enabled = false;
+          txtNombre.Enabled = false;
+          btnLimpiar.Enabled = true;
+          btnGrabar.Enabled = false;
+          btnBuscar.Enabled = true;
+          btnNuevo.Enabled = true;
+          txtUsuario.Text = "";
+          btnSalir.Enabled = true;
+          txtNombre.Text = "";
+          txtApellido.Text = "";
+          txtLocalidad.Text = "";
+          cb2.Text = "";
+          txtNumeroID.Text = "";
+          txtMail.Text = "";
+          txtDomicilio.Text = "";
+          txtNumeroCalle.Text = "";
+          txtPiso.Text = "";
+      }
 
   
 
